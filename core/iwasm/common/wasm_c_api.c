@@ -196,7 +196,7 @@ wasm_engine_new_internal(mem_alloc_type_t type,
 // #else
 //     bh_log_set_verbose_level(3);
 // #endif
-    bh_log_set_verbose_level(2);
+    bh_log_set_verbose_level(1);
 
     /* create wasm_engine_t */
     engine = malloc_internal(sizeof(wasm_engine_t));
