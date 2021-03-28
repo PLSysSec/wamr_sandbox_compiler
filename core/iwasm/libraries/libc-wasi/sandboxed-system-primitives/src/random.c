@@ -26,19 +26,20 @@ void random_buf(void *buf, size_t len) {
 #endif
 
 void random_buf(void *buf, size_t len) {
-  for (;;) {
-     ssize_t x = getrandom(buf, len, 0);
-     if (x < 0) {
-         if (errno == EINTR)
-             continue;
-         os_printf("getrandom failed: %s", strerror(errno));
-         abort();
-     }
-     if ((size_t)x == len)
-         return;
-     buf = (void *)((unsigned char *)buf + x);
-     len -= (size_t)x;
-  }
+  abort();
+  // for (;;) {
+  //    ssize_t x = getrandom(buf, len, 0);
+  //    if (x < 0) {
+  //        if (errno == EINTR)
+  //            continue;
+  //        os_printf("getrandom failed: %s", strerror(errno));
+  //        abort();
+  //    }
+  //    if ((size_t)x == len)
+  //        return;
+  //    buf = (void *)((unsigned char *)buf + x);
+  //    len -= (size_t)x;
+  // }
 }
 
 #else
