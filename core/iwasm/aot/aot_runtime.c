@@ -264,6 +264,53 @@ memories_deinstantiate(AOTModuleInstance *module_inst)
     wasm_runtime_free(module_inst->memories.ptr);
 }
 
+void* os_mmap_aligned(void *addr, size_t requested_length, int prot, int flags, size_t alignment, size_t alignment_offset)
+{
+    size_t padded_length = requested_length + alignment + alignment_offset;
+    uintptr_t unaligned = (uintptr_t) os_mmap(addr, padded_length, prot, flags);
+
+    if (!unaligned) {
+        return (void*) unaligned;
+    }
+
+    // Round up the next address that has addr % alignment = 0
+    uintptr_t aligned_nonoffset = (unaligned + (alignment - 1)) & ~(alignment - 1);
+
+    // Currently offset 0 is aligned according to alignment
+    // Alignment needs to be enforced at the given offset
+    uintptr_t aligned = 0;
+    if ((aligned_nonoffset - alignment_offset) >= unaligned) {
+        aligned = aligned_nonoffset - alignment_offset;
+    } else {
+        aligned = aligned_nonoffset - alignment_offset + alignment;
+    }
+
+    //Sanity check
+    if (aligned < unaligned
+        || (aligned + (requested_length - 1)) > (unaligned + (padded_length - 1))
+        || (aligned + alignment_offset) % alignment != 0)
+    {
+        os_munmap((void*) unaligned, padded_length);
+        return NULL;
+    }
+
+    {
+        size_t unused_front = aligned - unaligned;
+        if (unused_front != 0) {
+            os_munmap((void*) unaligned, unused_front);
+        }
+    }
+
+    {
+        size_t unused_back = (unaligned + (padded_length - 1)) - (aligned + (requested_length - 1));
+        if (unused_back != 0) {
+            os_munmap((void*) (aligned + requested_length), unused_back);
+        }
+    }
+
+    return (void*) aligned;
+}
+
 static AOTMemoryInstance*
 memory_instantiate(AOTModuleInstance *module_inst, AOTModule *module,
                    AOTMemoryInstance *memory_inst, AOTMemory *memory,
@@ -408,9 +455,11 @@ memory_instantiate(AOTModuleInstance *module_inst, AOTModule *module,
      * both i and memarg.offset are u32 in range 0 to 4G
      * so the range of ea is 0 to 8G
      */
+    // heap should be aligned to 4GB
+    const uint64 heap_alignement = 4 * (uint64)BH_GB;
     if (total_size >= UINT32_MAX
-        || !(p = mapped_mem = os_mmap(NULL, map_size,
-                                      MMAP_PROT_NONE, MMAP_MAP_NONE))) {
+        || !(p = mapped_mem = os_mmap_aligned(NULL, map_size,
+                                      MMAP_PROT_NONE, MMAP_MAP_NONE, heap_alignement, 0 /* memory_offset */))) {
         set_error_buf(error_buf, error_buf_size, "mmap memory failed");
         return NULL;
     }

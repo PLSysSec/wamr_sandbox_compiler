@@ -6,12 +6,12 @@
 #ifndef _PLATFORM_COMMON_H
 #define _PLATFORM_COMMON_H
 
+#include "../../../config.h"
+#include "platform_internal.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "../../../config.h"
-#include "platform_internal.h"
 
 #define BH_MAX_THREAD 32
 

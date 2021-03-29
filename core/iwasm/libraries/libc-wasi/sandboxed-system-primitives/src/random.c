@@ -19,27 +19,28 @@ void random_buf(void *buf, size_t len) {
   arc4random_buf(buf, len);
 }
 
-#elif CONFIG_HAS_GETRANDOM
+// Firefox does not seem to support get_random, perhaps as a safety mechanism
+// #elif CONFIG_HAS_GETRANDOM
 
-#ifndef BH_PLATFORM_LINUX_SGX
-#include <sys/random.h>
-#endif
+// #ifndef BH_PLATFORM_LINUX_SGX
+// #include <sys/random.h>
+// #endif
 
-void random_buf(void *buf, size_t len) {
-  for (;;) {
-     ssize_t x = getrandom(buf, len, 0);
-     if (x < 0) {
-         if (errno == EINTR)
-             continue;
-         os_printf("getrandom failed: %s", strerror(errno));
-         abort();
-     }
-     if ((size_t)x == len)
-         return;
-     buf = (void *)((unsigned char *)buf + x);
-     len -= (size_t)x;
-  }
-}
+// void random_buf(void *buf, size_t len) {
+//   for (;;) {
+//      ssize_t x = getrandom(buf, len, 0);
+//      if (x < 0) {
+//          if (errno == EINTR)
+//              continue;
+//          os_printf("getrandom failed: %s", strerror(errno));
+//          abort();
+//      }
+//      if ((size_t)x == len)
+//          return;
+//      buf = (void *)((unsigned char *)buf + x);
+//      len -= (size_t)x;
+//   }
+// }
 
 #else
 
