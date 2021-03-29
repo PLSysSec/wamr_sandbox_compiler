@@ -17,7 +17,11 @@ cd build
 
 if [ ! -f bin/llvm-lto ]; then
 
-  CORE_NUM=$(nproc --all)
+  case "$(uname -s)" in
+      Darwin*)    CORE_NUM=$(sysctl -n hw.ncpu);;
+      *)          CORE_NUM=$(nproc --all)
+  esac
+
   if [ -z "${CORE_NUM}" ]; then
     CORE_NUM=1
   fi
